@@ -1,0 +1,269 @@
+#pragma once
+
+#include <cstdint>
+
+namespace Rudesheim::Embedded
+{
+  class Undeletable
+  {
+  protected:
+    virtual ~Undeletable() = default;
+  };
+
+  template< class Target > class Class:
+    virtual Undeletable
+  {
+  protected:
+    Class() = default;
+
+  public:
+    static auto SoleObject() -> Target const &
+    {
+      static Target
+        object;
+
+      return object;
+    }
+  };
+
+  struct Deletable
+  {
+    virtual ~Deletable() = default;
+  };
+
+  class Duration
+  {
+    unsigned long
+      microseconds;
+
+    constexpr explicit Duration( unsigned long microseconds ):
+      microseconds( microseconds )
+    {
+    }
+
+    friend constexpr auto Seconds( unsigned long value ) -> Duration;
+    friend constexpr auto Milliseconds( unsigned long value ) -> Duration;
+    friend constexpr auto Microseconds( unsigned long value ) -> Duration;
+
+  public:
+    auto Wait() const -> void;
+
+    constexpr auto AsSeconds() const -> unsigned long
+    {
+      return microseconds / 1000000UL;
+    }
+
+    constexpr auto AsMilliseconds() const -> unsigned long
+    {
+      return microseconds / 1000UL;
+    }
+
+    constexpr auto AsMicroseconds() const -> unsigned long
+    {
+      return microseconds;
+    }
+  };
+
+  constexpr auto Seconds( unsigned long value ) -> Duration
+  {
+    return Duration( value * 1000000UL );
+  }
+
+  constexpr auto Milliseconds( unsigned long value ) -> Duration
+  {
+    return Duration( value * 1000UL );
+  }
+
+  constexpr auto Microseconds( unsigned long value ) -> Duration
+  {
+    return Duration( value );
+  }
+
+  class Device
+  {
+  public:
+    virtual auto BaudRate() const -> unsigned long
+    {
+      return 115200;
+    }
+
+    virtual auto Step() -> void
+    {
+    }
+
+    virtual ~Device() = default;
+  };
+
+  auto EntryPoint() -> Device &;
+
+  class Location
+  {
+    uint8_t
+      number,
+      controller;
+
+  public:
+    constexpr explicit Location( uint8_t number, uint8_t controller = 0 ):
+      number( number ),
+      controller( controller )
+    {
+    }
+
+    constexpr auto Number() const -> uint8_t
+    {
+      return number;
+    }
+
+    constexpr auto Controller() const -> uint8_t
+    {
+      return controller;
+    }
+  };
+
+  namespace Option
+  {
+    class Signal:
+      virtual public Undeletable
+    {
+    protected:
+      Signal() = default;
+    public:
+      virtual auto Write( Location const &location, float value ) const -> void = 0;
+      virtual auto Read( Location const &location ) const -> float = 0;
+      virtual auto Resolution() const -> uint8_t = 0;
+
+      auto MaxValue() const -> unsigned long
+      {
+        return ( 1UL << Resolution() ) - 1;
+      }
+    };
+
+    class Mode:
+      virtual public Undeletable
+    {
+    protected:
+      Mode() = default;
+    public:
+      virtual auto ConfigureInput( Location const &location ) const -> void = 0;
+      virtual auto ConfigureOutput( Location const &location ) const -> void = 0;
+    };
+
+    class PowerState;
+    class Steady;
+  }
+
+  class Board:
+    virtual public Undeletable
+  {
+  protected:
+    Board() = default;
+
+  public:
+    virtual auto DigitalSignal() const -> Option::Signal const & = 0;
+    virtual auto Analog8BitSignal() const -> Option::Signal const & = 0;
+    virtual auto Analog12BitSignal() const -> Option::Signal const & = 0;
+
+    virtual auto DefaultMode() const -> Option::Mode const & = 0;
+    virtual auto PullUpMode() const -> Option::Mode const & = 0;
+
+    virtual auto SteadyOn() const -> Option::Steady const & = 0;
+    virtual auto SteadyOff() const -> Option::Steady const & = 0;
+
+    virtual auto Wait( Duration duration ) const -> void = 0;
+
+    virtual auto BeginCommunication( unsigned long baudRate ) const -> void
+    {
+    }
+
+    virtual auto WaitSetupSerialPort() const -> void
+    {
+    }
+  };
+
+  Board extern const
+    &board;
+
+  namespace Pin
+  {
+    class Input:
+      public Deletable
+    {
+      Location
+        location;
+      Option::Signal const
+        &signal;
+      Option::Mode const
+        &mode;
+
+    public:
+      Input( Location const &location, Option::Signal const &signal = board.DigitalSignal(), Option::Mode const &mode = board.DefaultMode() );
+
+      auto Read() const -> float;
+    };
+
+    class Output:
+      public Deletable
+    {
+      Location
+        location;
+      Option::Signal const
+        &signal;
+      Option::Mode const
+        &mode;
+
+    public:
+      Output( Location const &location, Option::Signal const &signal = board.DigitalSignal(), Option::Mode const &mode = board.DefaultMode() );
+
+      auto Write( float value ) const -> void;
+    };
+  }
+
+  namespace Option
+  {
+    class PowerState:
+      virtual public Undeletable
+    {
+    protected:
+      PowerState() = default;
+    public:
+      virtual auto Name() const -> char const* = 0;
+      virtual auto Apply( Pin::Output const &pin, double scale = 1.0 ) const -> void = 0;
+    };
+
+    class Steady:
+      virtual public PowerState
+    {
+    protected:
+      Steady() = default;
+    public:
+      virtual auto Level() const -> float = 0;
+      virtual auto Apply( Pin::Output const &pin, double scale = 1.0 ) const -> void override;
+    };
+
+    class PwmOn:
+      virtual public PowerState
+    {
+      float
+        level;
+      Duration
+        duration;
+
+    public:
+      PwmOn( float level, Duration duration ):
+        level( level ),
+        duration( duration )
+      {
+      }
+
+      virtual auto Period() const -> Duration
+      {
+        return Microseconds( 1000UL );
+      }
+
+      virtual auto Name() const -> char const* override;
+      virtual auto Apply( Pin::Output const &pin, double scale = 1.0 ) const -> void override;
+    };
+
+    auto PowerStateFrom( bool value ) -> PowerState const &;
+  }
+}
