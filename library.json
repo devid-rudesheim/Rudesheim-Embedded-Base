@@ -1,5 +1,5 @@
 {
-  "name": "Rudesheim-Base",
+  "name": "Rudesheim-Embedded-Base",
   "version": "0.0.1",
   "description": "Rudesheim layer 1: Board / Board interface independent primitives.",
   "frameworks": "*",
