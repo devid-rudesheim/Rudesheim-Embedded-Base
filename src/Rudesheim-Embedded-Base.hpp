@@ -120,6 +120,42 @@ namespace Rudesheim::Embedded
     }
   };
 
+  class Credentials
+  {
+    char const
+      *id,
+      *password;
+
+  public:
+    constexpr Credentials( char const *id, char const *password ):
+      id( id ),
+      password( password )
+    {
+    }
+
+    constexpr auto Id() const -> char const*
+    {
+      return id;
+    }
+
+    constexpr auto Password() const -> char const*
+    {
+      return password;
+    }
+  };
+
+  class IpAddress
+  {
+    uint8_t
+      a, b, c, d;
+
+  public:
+    constexpr IpAddress( uint8_t a, uint8_t b, uint8_t c, uint8_t d ):
+      a( a ), b( b ), c( c ), d( d )
+    {
+    }
+  };
+
   namespace Option
   {
     class Signal:
@@ -170,6 +206,9 @@ namespace Rudesheim::Embedded
     virtual auto SteadyOff() const -> Option::Steady const & = 0;
 
     virtual auto Wait( Duration const &duration ) const -> void = 0;
+
+    virtual auto ConnectWifi( Credentials const &credentials ) const -> IpAddress = 0;
+    virtual auto DisconnectWifi() const -> void = 0;
 
     virtual auto BeginCommunication( unsigned long baudRate ) const -> void
     {
