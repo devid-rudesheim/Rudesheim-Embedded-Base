@@ -2,11 +2,6 @@
 
 namespace Rudesheim::Embedded
 {
-  auto Duration::Wait() const -> void
-  {
-    board.Wait( *this );
-  }
-
   namespace Option
   {
     auto Steady::Apply( Pin::Output const &pin, double ) const -> void
@@ -17,30 +12,6 @@ namespace Rudesheim::Embedded
     auto PwmOn::Name() const -> char const*
     {
       return "PWM_ON";
-    }
-
-    auto PwmOn::Apply( Pin::Output const &pin, double scale ) const -> void
-    {
-      auto const
-        period = Period().AsMicroseconds();
-
-      auto const
-        onTime = static_cast< unsigned long >( period * level * scale + 0.5 ),
-        cycles = duration.AsMicroseconds() / period;
-
-      for( auto cycle = 0U; cycle < cycles; ++cycle )
-      {
-        board.SteadyOn().Apply( pin, scale );
-        Microseconds( onTime ).Wait();
-
-        board.SteadyOff().Apply( pin, scale );
-        Microseconds( period - onTime ).Wait();
-      }
-    }
-
-    auto PowerStateFrom( bool value ) -> PowerState const &
-    {
-      return value ? board.SteadyOn() : board.SteadyOff();
     }
   }
 
