@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <stdexcept>
 
 namespace Rudesheim::Embedded
 {
@@ -196,6 +197,24 @@ namespace Rudesheim::Embedded
   public:
     constexpr IpAddress( uint8_t a, uint8_t b, uint8_t c, uint8_t d ):
       a( a ), b( b ), c( c ), d( d )
+    {
+    }
+  };
+
+  class Error
+  {
+  protected:
+    Error() = default;
+    virtual ~Error() = default;
+  };
+
+  class WifiConnectionError:
+    public Error,
+    public std::runtime_error
+  {
+  public:
+    explicit WifiConnectionError( char const *message ):
+      std::runtime_error( message )
     {
     }
   };
