@@ -31,48 +31,94 @@ namespace Rudesheim::Embedded
     virtual ~Deletable() = default;
   };
 
-  class Duration
+  class SiValue
   {
-    unsigned long
-      microseconds;
+    uint64_t
+      micro;
 
-    constexpr explicit Duration( unsigned long microseconds ):
-      microseconds( microseconds )
+    constexpr explicit SiValue( uint64_t micro ):
+      micro( micro )
     {
     }
 
-    friend constexpr auto Seconds( unsigned long value ) -> Duration;
-    friend constexpr auto Milliseconds( unsigned long value ) -> Duration;
-    friend constexpr auto Microseconds( unsigned long value ) -> Duration;
+    friend constexpr auto Micro( uint64_t value ) -> SiValue;
+    friend constexpr auto Milli( uint64_t value ) -> SiValue;
+    friend constexpr auto Base( uint64_t value ) -> SiValue;
+    friend constexpr auto Kilo( uint64_t value ) -> SiValue;
+    friend constexpr auto Mega( uint64_t value ) -> SiValue;
 
   public:
-    constexpr auto AsSeconds() const -> unsigned long
+    constexpr auto AsMicro() const -> uint64_t
     {
-      return microseconds / 1000000UL;
+      return micro;
     }
 
-    constexpr auto AsMilliseconds() const -> unsigned long
+    constexpr auto AsMilli() const -> uint64_t
     {
-      return microseconds / 1000UL;
+      return micro / 1000ULL;
     }
 
-    constexpr auto AsMicroseconds() const -> unsigned long
+    constexpr auto AsBase() const -> uint64_t
     {
-      return microseconds;
+      return micro / 1000000ULL;
+    }
+
+    constexpr auto AsKilo() const -> uint64_t
+    {
+      return micro / 1000000000ULL;
+    }
+
+    constexpr auto AsMega() const -> uint64_t
+    {
+      return micro / 1000000000000ULL;
     }
   };
 
-  constexpr auto Seconds( unsigned long value ) -> Duration
+  constexpr auto Micro( uint64_t value ) -> SiValue
   {
-    return Duration( value * 1000000UL );
+    return SiValue( value );
   }
 
-  constexpr auto Milliseconds( unsigned long value ) -> Duration
+  constexpr auto Milli( uint64_t value ) -> SiValue
   {
-    return Duration( value * 1000UL );
+    return SiValue( value * 1000ULL );
   }
 
-  constexpr auto Microseconds( unsigned long value ) -> Duration
+  constexpr auto Base( uint64_t value ) -> SiValue
+  {
+    return SiValue( value * 1000000ULL );
+  }
+
+  constexpr auto Kilo( uint64_t value ) -> SiValue
+  {
+    return SiValue( value * 1000000000ULL );
+  }
+
+  constexpr auto Mega( uint64_t value ) -> SiValue
+  {
+    return SiValue( value * 1000000000000ULL );
+  }
+
+  class Duration
+  {
+    SiValue
+      second;
+
+    constexpr explicit Duration( SiValue const &second ):
+      second( second )
+    {
+    }
+
+    friend constexpr auto Second( SiValue const &value ) -> Duration;
+
+  public:
+    constexpr auto AsSecond() const -> SiValue const &
+    {
+      return second;
+    }
+  };
+
+  constexpr auto Second( SiValue const &value ) -> Duration
   {
     return Duration( value );
   }
@@ -294,7 +340,7 @@ namespace Rudesheim::Embedded
 
       virtual auto Period() const -> Duration
       {
-        return Microseconds( 1000UL );
+        return Second( Micro( 1000UL ) );
       }
 
       virtual auto Name() const -> char const* override;
