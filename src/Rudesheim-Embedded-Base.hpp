@@ -169,7 +169,7 @@ namespace Rudesheim::Embedded
     virtual auto SteadyOn() const -> Option::Steady const & = 0;
     virtual auto SteadyOff() const -> Option::Steady const & = 0;
 
-    virtual auto Wait( Duration duration ) const -> void = 0;
+    virtual auto Wait( Duration const &duration ) const -> void = 0;
 
     virtual auto BeginCommunication( unsigned long baudRate ) const -> void
     {
