@@ -213,10 +213,7 @@ namespace Rudesheim::Embedded
     public std::runtime_error
   {
   public:
-    explicit WifiConnectionError( char const *message ):
-      std::runtime_error( message )
-    {
-    }
+    using std::runtime_error::runtime_error;
   };
 
   namespace Option
