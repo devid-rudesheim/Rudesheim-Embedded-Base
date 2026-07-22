@@ -46,8 +46,6 @@ namespace Rudesheim::Embedded
     friend constexpr auto Microseconds( unsigned long value ) -> Duration;
 
   public:
-    auto Wait() const -> void;
-
     constexpr auto AsSeconds() const -> unsigned long
     {
       return microseconds / 1000000UL;
